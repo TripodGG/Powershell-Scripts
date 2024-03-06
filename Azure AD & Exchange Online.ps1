@@ -4,6 +4,15 @@
 # License: MIT License, Copyright (c) 2024 TripodGG
 
 
+# Inform the user about the authentication process
+Write-Host "You will be asked to authenticate twice - once for Azure AD and once for Exchange Online."
+$confirmation = Read-Host "Do you understand and want to proceed? (y/n)"
+
+if ($confirmation -ne 'y' -and $confirmation -ne 'yes') {
+    Write-Host "Operation canceled."
+    exit
+}
+
 # Check if AzureAD module is installed, if not, install it
 if (-not (Get-Module -Name AzureAD -ListAvailable)) {
     Write-Output "Installing Azure AD module..."
@@ -15,60 +24,43 @@ Import-Module AzureAD
 Import-Module ExchangeOnlineManagement
 
 # Authenticate to Azure AD using modern authentication
-Connect-AzureAD -UseDeviceAuthentication
+Connect-AzureAD 
 
-# Get the Azure AD token
-$azureAdToken = $null
-try {
-    $azureAdToken = (Get-AzureADAccessToken -ResourceUrl "https://graph.microsoft.com").Token
-} catch {
-    Write-Error "Failed to get Azure AD token. Make sure you are authenticated to Azure AD."
-    Disconnect-AzureAD -Confirm:$false
-    Exit
-}
-
-# Connect to Exchange Online using the Azure AD token
-Connect-ExchangeOnline -AccessToken $azureAdToken
-
-# Now you are connected to both Azure AD and Exchange Online using the same authentication
+# Connect to Exchange Online using modern authentication
+Connect-ExchangeOnline 
 
 # Display menu to the user
 $choice = 0
-while ($choice -ne 10) {
+while ($choice -ne 9) {
     Clear-Host
     Write-Host "Choose an option:"
     Write-Host "1. Display organization's current settings"
-    Write-Host "2. Get information about a user in Azure AD"
-    Write-Host "3. Get information about a user mailbox"
-    Write-Host "4. Set 'Send from Alias' option on or off"
-    Write-Host "5. Turn off 'Focused Inbox'"
-    Write-Host "6. Set a mailbox to a specific type"
-    Write-Host "7. Grant a user access to a shared mailbox"
-    Write-Host "8. Remove a user access to a shared mailbox"
-    Write-Host "9. Set a user's password to never expire"
-    Write-Host "10. Exit"
-    
+    Write-Host "2. Get information about a user mailbox"
+    Write-Host "3. Set 'Send from Alias' option on or off"
+    Write-Host "4. Set 'Focused Inbox' option on or off"
+    Write-Host "5. Set a mailbox to a specific type"
+    Write-Host "6. Grant a user access to a shared mailbox"
+    Write-Host "7. Remove a user access to a shared mailbox"
+    Write-Host "8. Set a user's password to never expire"
+    Write-Host "9. Exit"
+
     $choice = Read-Host "Enter the number of your choice"
     
     switch ($choice) {
         1 {
             # Display organization's current settings
             Get-OrganizationConfig | Format-List
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
         2 {
-            # Get information about a user in Azure AD
-            $username = Read-Host "Enter the username to check"
-            Get-AzureADUser -UserPrincipalName $username | Format-List
-            break
-        }
-        3 {
             # Get information about a user mailbox
             $emailAddress = Read-Host "Enter the email address to check"
             Get-Mailbox -Identity $emailAddress | Format-List
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        4 {
+        3 {
             # Set 'Send from Alias' option on or off
             $sendFromAliasEnabled = Get-OrganizationConfig | Select-Object -ExpandProperty SendFromAliasEnabled
             Write-Host "Current 'Send from Alias' status: $sendFromAliasEnabled"
@@ -77,44 +69,49 @@ while ($choice -ne 10) {
                 Set-OrganizationConfig -SendFromAliasEnabled (-not $sendFromAliasEnabled)
                 Write-Host "Send from Alias option has been updated."
             }
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
+            break
+        }
+        4 {
+            # Set 'Focused Inbox' option on or off
+            $focusedInboxOn = Get-Mailbox -Identity $env:USERNAME | Select-Object -ExpandProperty FocusedInboxOn
+            Write-Host "Current 'Focused Inbox' status: $focusedInboxOn"
+            $choice = Read-Host "Do you want to change it? (y/n)"
+            if ($choice -eq 'y' -or $choice -eq 'yes') {
+                Set-Mailbox -Identity $env:USERNAME -FocusedInboxOn (-not $focusedInboxOn)
+                Write-Host "Focused Inbox option has been updated."
+            }
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
         5 {
-            # Turn off 'Focused Inbox'
-            $focusedInboxOn = Get-Mailbox -Identity $env:USERNAME | Select-Object -ExpandProperty FocusedInboxOn
-            if ($focusedInboxOn) {
-                Set-Mailbox -Identity $env:USERNAME -FocusedInboxOn $false
-                Write-Host "Focused Inbox has been turned off."
-            } else {
-                Write-Host "Focused Inbox is already disabled."
-            }
-            break
-        }
-        6 {
             # Set a mailbox to a specific type
             $targetMailbox = Read-Host "Enter the email address of the mailbox to be converted"
             $mailboxType = Read-Host "Enter the type of mailbox (regular, room, equipment, or shared)"
             Set-Mailbox -Identity $targetMailbox -Type $mailboxType
             Write-Host "Mailbox type has been updated."
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        7 {
+        6 {
             # Grant a user access to a shared mailbox
             $userToAdd = Read-Host "Enter the user to grant access"
             $sharedMailbox = Read-Host "Enter the shared mailbox"
             Add-MailboxPermission -Identity $sharedMailbox -User $userToAdd -AccessRights FullAccess -InheritanceType All
             Write-Host "User $userToAdd has been granted access to $sharedMailbox."
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        8 {
+        7 {
             # Remove a user access to a shared mailbox
             $userToRemove = Read-Host "Enter the user to remove access"
             $sharedMailboxToRemove = Read-Host "Enter the shared mailbox"
             Remove-MailboxPermission -Identity $sharedMailboxToRemove -User $userToRemove -AccessRights FullAccess -Confirm:$false
             Write-Host "User $userToRemove has been removed from access to $sharedMailboxToRemove."
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        9 {
+        8 {
             # Set a user's password to never expire
             $userEmail = Read-Host "Enter the user's email address"
             $user = Get-AzureADUser -Filter "UserPrincipalName eq '$userEmail'"
@@ -129,20 +126,19 @@ while ($choice -ne 10) {
             } else {
                 Write-Host "User not found."
             }
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        10 {
+        9 {
             Write-Output "Exiting..."
             break
         }
         default {
             Write-Output "Invalid choice. Please enter a valid option."
+            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
     }
-    
-    # Pause to allow the user to read the output
-    Read-Host "Press Enter to continue..."
 }
 
 # Disconnect from Azure AD
