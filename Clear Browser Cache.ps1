@@ -10,37 +10,62 @@ function Clear-BrowserCaches {
 
     function Clear-BrowserCache($browserName, $cachePath) {
         if (Test-Path $cachePath -PathType Container) {
-            $clearCache = Read-Host -Prompt "Do you want to clear the cache for $browserName? (Y/N)"
-            if ($clearCache -eq 'Y' -or $clearCache -eq 'y') {
-                Remove-Item -Path $cachePath -Force -Recurse
-                Write-Host "$browserName cache cleared successfully."
-            } else {
-                Write-Host "Skipping $browserName cache."
-            }
+            Remove-Item -Path $cachePath -Force -Recurse
+            Write-Host "$browserName cache cleared successfully."
         } else {
             Write-Host "$browserName not detected."
         }
     }
 
-    Clear-BrowserCache -browserName 'Google Chrome' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'Google\Chrome\User Data\Default\Cache'))
-    Clear-BrowserCache -browserName 'Mozilla Firefox' -cachePath ([System.IO.Path]::Combine($env:APPDATA, 'Mozilla\Firefox\Profiles', '*\cache2'))
-    Clear-BrowserCache -browserName 'Microsoft Edge' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'Microsoft\Edge\User Data\Default\Cache'))
-    Clear-BrowserCache -browserName 'Opera' -cachePath ([System.IO.Path]::Combine($env:APPDATA, 'Opera Software\Opera Stable\Cache'))
-    Clear-BrowserCache -browserName 'Opera GX' -cachePath ([System.IO.Path]::Combine($env:APPDATA, 'Opera Software\Opera GX Stable\Cache'))
-    Clear-BrowserCache -browserName 'Brave' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'BraveSoftware\Brave-Browser\User Data\Default\Cache'))
-    Clear-BrowserCache -browserName 'Safari' -cachePath ([System.IO.Path]::Combine($env:USERPROFILE, 'AppData\Local\Packages\AppleInc.Safari_*\AC\Microsoft\Crypto\RSA\S-1-5-21-*\'))
-    Clear-BrowserCache -browserName 'Chromium' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'Chromium\User Data\Default\Cache'))
-    Clear-BrowserCache -browserName 'Internet Explorer' -cachePath "$env:LOCALAPPDATA\Microsoft\Windows\INetCache"
-    Clear-BrowserCache -browserName 'Vivaldi' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'Vivaldi\User Data\Default\Cache'))
-    Clear-BrowserCache -browserName 'Gnome Web' -cachePath ([System.IO.Path]::Combine($env:HOME, '.cache\epiphany\cache'))
-    Clear-BrowserCache -browserName 'Maxthon' -cachePath ([System.IO.Path]::Combine($env:APPDATA, 'Maxthon3\UserData\Users\Guest\Cache'))
-    Clear-BrowserCache -browserName 'SlimBrowser' -cachePath ([System.IO.Path]::Combine($env:APPDATA, 'SlimBrowser\User Data\Default\Cache'))
-    Clear-BrowserCache -browserName 'UC Browser' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'UCBrowser\Cache'))
-    Clear-BrowserCache -browserName 'Konqueror' -cachePath ([System.IO.Path]::Combine($env:HOME, '.cache\kde\*'))
-    Clear-BrowserCache -browserName 'Slimjet Browser' -cachePath ([System.IO.Path]::Combine($env:LOCALAPPDATA, 'Slimjet\User Data\Default\Cache'))
+    function Confirm-ClearAllCaches {
+        $clearAllCaches = Read-Host -Prompt "Do you want to clear cache for all installed browsers? (Y/N)"
+        if ($clearAllCaches -eq 'Y' -or $clearAllCaches -eq 'yes') {
+            foreach ($browser in $browsers) {
+                Clear-BrowserCache -browserName $browser.Name -cachePath $browser.CachePath
+            }
+            Write-Host "All installed browsers cache has been cleared."
+        } elseif ($clearAllCaches -eq 'N' -or $clearAllCaches -eq 'no') {
+            $confirmSkip = Read-Host -Prompt "Are you sure you don't want to clear any browser cache? (Y/N)"
+            if ($confirmSkip -eq 'Y' -or $confirmSkip -eq 'yes') {
+                $confirmReallySkip = Read-Host -Prompt "Are you REALLY sure you don't want to clear any browser cache? (Y/N)"
+                if ($confirmReallySkip -eq 'Y' -or $confirmReallySkip -eq 'yes') {
+                    $confirmReallyReallySkip = Read-Host -Prompt "Are you *REALLY* REALLY sure you don't want to clear any browser cache? (Y/N)"
+                    if ($confirmReallyReallySkip -eq 'Y' -or $confirmReallyReallySkip -eq 'yes') {
+                        Write-Host "Really?! Why did you run this script?"
+                        exit
+                    } elseif ($confirmReallyReallySkip -eq 'N' -or $confirmReallyReallySkip -eq 'no') {
+                        # Return to the original prompt
+                        Confirm-ClearAllCaches
+                    }
+                } elseif ($confirmReallySkip -eq 'N' -or $confirmReallySkip -eq 'no') {
+                    # Return to the original prompt
+                    Confirm-ClearAllCaches
+                }
+            } elseif ($confirmSkip -eq 'Y' -or $confirmSkip -eq 'yes') {
+                Write-Host "Why did you run this script?"
+                exit
+            }
+        } else {
+            # Return to the original prompt
+            Confirm-ClearAllCaches
+        }
+    }
 
-    Write-Host "All detected browser caches checked."
+    # Define an array of browsers to check
+    $browsers = @(
+        @{Name='Google Chrome'; Path='HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe'; CachePath="$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache"},
+        @{Name='Mozilla Firefox'; Path='HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths\firefox.exe'; CachePath="$env:APPDATA\Mozilla\Firefox\Profiles\*\cache2"},
+        @{Name='Microsoft Edge'; Path='HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe'; CachePath="$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache"},
+        @{Name='Opera'; Path='HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths\opera.exe'; CachePath="$env:APPDATA\Opera Software\Opera Stable\Cache"},
+        @{Name='Opera GX'; Path='HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths\opera_gx.exe'; CachePath="$env:APPDATA\Opera Software\Opera GX Stable\Cache"},
+        @{Name='Brave'; Path='HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths\brave.exe'; CachePath="$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Cache"},
+        @{Name='Internet Explorer'; Path='HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\IEXPLORE.EXE'; CachePath="$env:LOCALAPPDATA\Microsoft\Windows\INetCache"},
+        @{Name='Safari'; Path='HKLM:\Software\Apple Inc.\Safari'; CachePath="$env:USERPROFILE\AppData\Local\Packages\AppleInc.Safari_*\AC\Microsoft\Crypto\RSA\S-1-5-21-*\Cache"}
+        # Add more browsers as needed
+    )
+
+    Confirm-ClearAllCaches
 }
 
-# Call the function
+# Clear all browser cache
 Clear-BrowserCaches
