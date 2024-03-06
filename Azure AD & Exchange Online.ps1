@@ -104,7 +104,7 @@ while ($choice -ne 11) {
 
                 $userModificationChoice = 0
                 while ($userModificationChoice -ne 8) {
-                    Write-Host "Choose an option to modify the user $userToModify:"
+                    Write-Host "Choose an option to modify the user $($userToModify):"
                     Write-Host "1. Change user's display name"
                     Write-Host "2. Change user's title"
                     Write-Host "3. Change user's department"
