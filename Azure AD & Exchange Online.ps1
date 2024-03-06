@@ -27,22 +27,28 @@ Import-Module ExchangeOnlineManagement
 Connect-AzureAD 
 
 # Connect to Exchange Online using modern authentication
-Connect-ExchangeOnline 
+Connect-ExchangeOnline
 
-# Display menu to the user
+# Retrieve organization information from Azure
+$organizationInfo = Get-AzureADTenantDetail | Select-Object -ExpandProperty DisplayName
+
+# Display menu to the user with the welcome message
 $choice = 0
-while ($choice -ne 9) {
+while ($choice -ne 10) {
     Clear-Host
-    Write-Host "Choose an option:"
+    Write-Host "Welcome to $($organizationInfo)'s Azure AD and Exchange Online Server."
+    Write-Host "Please choose an option below:"
+    
     Write-Host "1. Display organization's current settings"
-    Write-Host "2. Get information about a user mailbox"
-    Write-Host "3. Set 'Send from Alias' option on or off"
-    Write-Host "4. Set 'Focused Inbox' option on or off"
-    Write-Host "5. Set a mailbox to a specific type"
-    Write-Host "6. Grant a user access to a shared mailbox"
-    Write-Host "7. Remove a user access to a shared mailbox"
-    Write-Host "8. Set a user's password to never expire"
-    Write-Host "9. Exit"
+    Write-Host "2. List all accounts in Exchange Online"
+    Write-Host "3. Get information about a user mailbox"
+    Write-Host "4. Set 'Send from Alias' option on or off"
+    Write-Host "5. Set 'Focused Inbox' option on or off"
+    Write-Host "6. Set a mailbox to a specific type"
+    Write-Host "7. Grant a user access to a shared mailbox"
+    Write-Host "8. Remove a user access to a shared mailbox"
+    Write-Host "9. Set a user's password to never expire"
+    Write-Host "10. Exit"
 
     $choice = Read-Host "Enter the number of your choice"
     
@@ -50,17 +56,20 @@ while ($choice -ne 9) {
         1 {
             # Display organization's current settings
             Get-OrganizationConfig | Format-List
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
         2 {
-            # Get information about a user mailbox
-            $emailAddress = Read-Host "Enter the email address to check"
-            Get-Mailbox -Identity $emailAddress | Format-List
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
+            # List all accounts in Exchange Online
+            Get-Mailbox | Select-Object DisplayName, UserPrincipalName
             break
         }
         3 {
+            # Get information about a user mailbox
+            $emailAddress = Read-Host "Enter the email address to check"
+            Get-Mailbox -Identity $emailAddress | Format-List
+            break
+        }
+        4 {
             # Set 'Send from Alias' option on or off
             $sendFromAliasEnabled = Get-OrganizationConfig | Select-Object -ExpandProperty SendFromAliasEnabled
             Write-Host "Current 'Send from Alias' status: $sendFromAliasEnabled"
@@ -69,10 +78,9 @@ while ($choice -ne 9) {
                 Set-OrganizationConfig -SendFromAliasEnabled (-not $sendFromAliasEnabled)
                 Write-Host "Send from Alias option has been updated."
             }
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        4 {
+        5 {
             # Set 'Focused Inbox' option on or off
             $focusedInboxOn = Get-Mailbox -Identity $env:USERNAME | Select-Object -ExpandProperty FocusedInboxOn
             Write-Host "Current 'Focused Inbox' status: $focusedInboxOn"
@@ -81,37 +89,33 @@ while ($choice -ne 9) {
                 Set-Mailbox -Identity $env:USERNAME -FocusedInboxOn (-not $focusedInboxOn)
                 Write-Host "Focused Inbox option has been updated."
             }
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        5 {
+        6 {
             # Set a mailbox to a specific type
             $targetMailbox = Read-Host "Enter the email address of the mailbox to be converted"
             $mailboxType = Read-Host "Enter the type of mailbox (regular, room, equipment, or shared)"
             Set-Mailbox -Identity $targetMailbox -Type $mailboxType
             Write-Host "Mailbox type has been updated."
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        6 {
+        7 {
             # Grant a user access to a shared mailbox
             $userToAdd = Read-Host "Enter the user to grant access"
             $sharedMailbox = Read-Host "Enter the shared mailbox"
             Add-MailboxPermission -Identity $sharedMailbox -User $userToAdd -AccessRights FullAccess -InheritanceType All
             Write-Host "User $userToAdd has been granted access to $sharedMailbox."
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        7 {
+        8 {
             # Remove a user access to a shared mailbox
             $userToRemove = Read-Host "Enter the user to remove access"
             $sharedMailboxToRemove = Read-Host "Enter the shared mailbox"
             Remove-MailboxPermission -Identity $sharedMailboxToRemove -User $userToRemove -AccessRights FullAccess -Confirm:$false
             Write-Host "User $userToRemove has been removed from access to $sharedMailboxToRemove."
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        8 {
+        9 {
             # Set a user's password to never expire
             $userEmail = Read-Host "Enter the user's email address"
             $user = Get-AzureADUser -Filter "UserPrincipalName eq '$userEmail'"
@@ -126,19 +130,20 @@ while ($choice -ne 9) {
             } else {
                 Write-Host "User not found."
             }
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
-        9 {
+        10 {
             Write-Output "Exiting..."
             break
         }
         default {
             Write-Output "Invalid choice. Please enter a valid option."
-            $null = Read-Host "Press Enter to continue or 'C' to cancel"
             break
         }
     }
+    
+    # Pause to allow the user to read the output
+    Read-Host "Press Enter to continue..."
 }
 
 # Disconnect from Azure AD
