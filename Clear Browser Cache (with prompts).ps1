@@ -1,6 +1,6 @@
 # Name: Clear All Browser Cache
 # Author: TripodGG
-# Purpose: Search for all installed web browsers and clear all cached data
+# Purpose: Search for all installed web browsers and prompt to clear all cached data
 # License: MIT License, Copyright (c) 2024 TripodGG
 
 
