@@ -58,6 +58,14 @@ $defaultDomain = Get-AcceptedDomain | Where-Object { $_.Default -eq 'True' }
 $choice = 0
 while ($choice -ne 11) {
     Clear-Host
+	# Display ASCII art at the top of the menu
+Write-Host @"
+    _                      _   ___      __  ___        _                        ___       _ _          
+   /_\   ____  _ _ _ ___  /_\ |   \    / / | __|_ ____| |_  __ _ _ _  __ _ ___ / _ \ _ _ | (_)_ _  ___ 
+  / _ \ |_ / || | '_/ -_)/ _ \| |) |  / /  | _|\ \ / _| ' \/ _` | ' \/ _` / -_) (_) | ' \| | | ' \/ -_)
+ /_/ \_\/__|\_,_|_| \___/_/ \_\___/  /_/   |___/_\_\__|_||_\__,_|_||_\__, \___|\___/|_||_|_|_|_||_\___|
+                                                                     |___/                             
+"@
     Write-Host "Welcome to $($organizationInfo)'s Azure AD and Exchange Online Server."
     Write-Host "Please choose an option below:"
 
