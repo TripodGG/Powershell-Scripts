@@ -28,6 +28,12 @@ if (-not (Get-Module -Name AzureAD -ListAvailable)) {
     Install-Module -Name AzureAD -Force -AllowClobber
 }
 
+# Check if ExchangeOnlineManagement module is installed, if not, install it
+if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
+    Write-Output "Installing Azure AD module..."
+    Install-Module -Name ExchangeOnlineManagement -Force -AllowClobber
+}
+
 # Import required modules
 Import-Module AzureAD
 Import-Module ExchangeOnlineManagement
