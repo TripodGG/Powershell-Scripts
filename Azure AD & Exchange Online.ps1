@@ -14,7 +14,7 @@ function Log-Error {
 }
 
 # Inform the user about the authentication process
-Write-Host "You will be asked to authenticate twice - once for Azure AD and once for Exchange Online."
+Write-Host "You will be asked to authenticate three times - for Azure AD, Exchange Online, and the AIP Service (formerly AADRM)."
 $confirmation = Read-Host "Do you understand and want to proceed? (y/n)"
 
 if ($confirmation -ne 'y' -and $confirmation -ne 'yes') {
@@ -30,13 +30,20 @@ if (-not (Get-Module -Name AzureAD -ListAvailable)) {
 
 # Check if ExchangeOnlineManagement module is installed, if not, install it
 if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
-    Write-Output "Installing Azure AD module..."
+    Write-Output "Installing Exchange Online Management module..."
     Install-Module -Name ExchangeOnlineManagement -Force -AllowClobber
+}
+
+# Check if AIPService module is installed, if not, install it
+if (-not (Get-Module -Name AIPService -ListAvailable)) {
+    Write-Output "Installing AIP Service module..."
+    Install-Module -Name AIPService -Force -AllowClobber
 }
 
 # Import required modules
 Import-Module AzureAD
 Import-Module ExchangeOnlineManagement
+Import-Module AIPService
 
 # Authenticate to Azure AD using modern authentication
 try {
@@ -56,16 +63,25 @@ try {
     exit
 }
 
+# Connect to AIPService using modern authentication
+try {
+    Connect-AIPService
+} catch {
+    Log-Error "Failed to connect to AIPService. Error: $_"
+    Write-Host "Failed to connect to AIPService. See error log for details."
+    exit
+}
+
 # Retrieve organization information from Azure
 $organizationInfo = Get-AzureADTenantDetail | Select-Object -ExpandProperty DisplayName
 $defaultDomain = Get-AcceptedDomain | Where-Object { $_.Default -eq 'True' }
 
 # Display menu to the user with the welcome message
 $choice = 0
-while ($choice -ne 11) {
+while ($choice -ne 13) {
     Clear-Host
-	# Display ASCII art at the top of the menu
-Write-Host @"
+    # Display ASCII art at the top of the menu
+    Write-Host @"
     _                      _   ___      __  ___        _                        ___       _ _          
    /_\   ____  _ _ _ ___  /_\ |   \    / / | __|_ ____| |_  __ _ _ _  __ _ ___ / _ \ _ _ | (_)_ _  ___ 
   / _ \ |_ / || | '_/ -_)/ _ \| |) |  / /  | _|\ \ / _| ' \/ _` | ' \/ _` / -_) (_) | ' \| | | ' \/ -_)
@@ -85,7 +101,9 @@ Write-Host @"
     Write-Host "8. Grant a user access to a shared mailbox"
     Write-Host "9. Remove a user access to a shared mailbox"
     Write-Host "10. Set a user's password to never expire"
-    Write-Host "11. Exit"
+    Write-Host "11. Check if Microsoft Message Encryption is enabled"
+	Write-Host "12. Test Microsoft Message Encryption"
+    Write-Host "13. Exit"
 
     $choice = Read-Host "Enter the number of your choice"
 
@@ -118,6 +136,17 @@ Write-Host @"
 
                 $userModificationChoice = 0
                 while ($userModificationChoice -ne 8) {
+					Clear-Host
+						# Display ASCII art at the top of the menu
+Write-Host @"
+
+   __  ___        ___ ___                                
+  /  |/  /__  ___/ (_) _/_ __    ___ _    __ _____ ___ ____
+ / /|_/ / _ \/ _  / / _/ // /   / _ ` /   / // (_-</ -_) __/
+/_/  /_/\___/\_,_/_/_/ \_, /    \_,_/    \_,_/___/\__/_/   
+                      /___/                              
+                           
+"@
                     Write-Host "Choose an option to modify the user $($userToModify):"
                     Write-Host "1. Change user's display name"
                     Write-Host "2. Change user's title"
@@ -269,6 +298,37 @@ Write-Host @"
                 break
             }
             11 {
+                # Check if Microsoft Message Encryption is enabled
+                $mmeEnabled = Get-IRMConfiguration | Select-Object -ExpandProperty AzureRMSLicensingEnabled
+                Write-Host "Microsoft Message Encryption (MME) status: $mmeEnabled"
+                break
+            }
+			12 {
+				# Test Microsoft Message Encryption
+				$senderAddress = Read-Host "Enter the email address you would like to test"
+				$recipientAddress = Read-Host "Enter tan email address to test to (this will *NOT* send an email)"
+
+				$testResult = Test-IRMConfiguration -Sender $senderAddress -Recipient $recipientAddress
+				Write-host "Test Result:"
+				Write-Host $testResult
+
+				if ($testResult.Result -eq "Failed to acquire RMS templates") {
+					Write-Host "Test failed with the error message: $($testResult.Error)"
+					Write-Host "Attempting to fix the issue..."
+					
+					$RMSConfig = Get-AipServiceConfiguration
+					$LicenseUri = $RMSConfig.LicensingIntranetDistributionPointUrl
+					Set-IRMConfiguration -LicensingLocation $LicenseUri
+					Set-IRMConfiguration -InternalLicensingEnabled $true
+					
+					Write-Host "Configuration updated. Retesting..."
+					Test-IRMConfiguration -Sender $senderAddress -Recipient $recipientAddress
+				} else {
+					Write-Host "Test successful!"
+				}
+				break
+			}
+            13 {
                 Write-Output "Exiting..."
                 break
             }
@@ -287,7 +347,10 @@ Write-Host @"
 }
 
 # Disconnect from Azure AD
-    Disconnect-AzureAD -Confirm:$false
+Disconnect-AzureAD -Confirm:$false
 
 # Disconnect from Exchange Online
-    Disconnect-ExchangeOnline -Confirm:$false
+Disconnect-ExchangeOnline -Confirm:$false
+
+# Clear the screen before Exiting
+Clear-Host
