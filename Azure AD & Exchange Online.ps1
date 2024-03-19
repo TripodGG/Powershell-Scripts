@@ -18,7 +18,7 @@ Write-Host "You will be asked to authenticate three times - for Azure AD, Exchan
 $confirmation = Read-Host "Do you understand and want to proceed? (y/n)"
 
 if ($confirmation -ne 'y' -and $confirmation -ne 'yes') {
-    Write-Host "Operation canceled."
+    Write-Host "Operation cancelled."
     exit
 }
 
@@ -351,6 +351,9 @@ Disconnect-AzureAD -Confirm:$false
 
 # Disconnect from Exchange Online
 Disconnect-ExchangeOnline -Confirm:$false
+
+# Disconnect from AIP Service
+Disconnect-AIPService -Confirm:$false
 
 # Clear the screen before Exiting
 Clear-Host
