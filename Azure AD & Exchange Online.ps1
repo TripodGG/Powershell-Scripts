@@ -306,7 +306,7 @@ Write-Host @"
 			12 {
 				# Test Microsoft Message Encryption
 				$senderAddress = Read-Host "Enter the email address you would like to test"
-				$recipientAddress = Read-Host "Enter tan email address to test to (this will *NOT* send an email)"
+				$recipientAddress = Read-Host "Enter an email address to test to (this will *NOT* send an email)"
 
 				$testResult = Test-IRMConfiguration -Sender $senderAddress -Recipient $recipientAddress
 				Write-host "Test Result:"
