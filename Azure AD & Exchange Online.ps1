@@ -3,6 +3,12 @@
 # Purpose: Written to perform common tasks within Azure AD (Encarta) and Exchange Online
 # License: MIT License, Copyright (c) 2024 TripodGG
 
+
+
+###########################
+# Functions & definitions #
+###########################
+
 function Log-Error {
     param (
         [string]$errorMessage
@@ -13,9 +19,32 @@ function Log-Error {
     $logEntry | Out-File -Append -FilePath $errorLogPath
 }
 
+# Function to test administrative privileges
+function Test-Administrator {
+    $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    return $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+
+
+##########################
+# Installing modules and #
+# Connecting to services #
+##########################
+
 # Inform the user about the authentication process
-Write-Host "You will be asked to authenticate three times - for Azure AD, Exchange Online, and the AIP Service (formerly AADRM)."
-$confirmation = Read-Host "Do you understand and want to proceed? (y/n)"
+Clear-Host
+    Write-Host @"
+	
+** ATTENTION **
+
+You will be asked to authenticate four times - for Azure AD, AIP, Exchange Online, and the MSOnline services. This is to ensure you are properly connected to all services, confirming all available functions within this script will work as intended.
+
+If you are missing any of the required modules, they will be automoatically installed on to your computer.
+
+                    
+"@
+$confirmation = Read-Host "Do you understand the above statements and wish to proceed? (y/n)"
 
 if ($confirmation -ne 'y' -and $confirmation -ne 'yes') {
     Write-Host "Operation cancelled."
@@ -24,28 +53,79 @@ if ($confirmation -ne 'y' -and $confirmation -ne 'yes') {
 
 # Check if AzureAD module is installed, if not, install it
 if (-not (Get-Module -Name AzureAD -ListAvailable)) {
-    Write-Output "Installing Azure AD module..."
-    Install-Module -Name AzureAD -Force -AllowClobber
-}
-
-# Check if ExchangeOnlineManagement module is installed, if not, install it
-if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
-    Write-Output "Installing Exchange Online Management module..."
-    Install-Module -Name ExchangeOnlineManagement -Force -AllowClobber
+    Write-Output "Checking administrative privileges..."
+    if (Test-Administrator) {
+        Write-Output "Installing Azure AD module..."
+        try {
+            Install-Module -Name AzureAD -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        } catch {
+            Write-Warning "Automatic installation of AzureAD module failed. Please install it manually."
+            Write-Warning "To install manually, open PowerShell as an administrator and run: Install-Module -Name AzureAD -Force -AllowClobber"
+        }
+    } else {
+        Write-Warning "Administrative privileges required to install the AzureAD module."
+        Write-Warning "Please run this script as an administrator or install the module manually."
+    }
 }
 
 # Check if AIPService module is installed, if not, install it
 if (-not (Get-Module -Name AIPService -ListAvailable)) {
-    Write-Output "Installing AIP Service module..."
-    Install-Module -Name AIPService -Force -AllowClobber
+    Write-Output "Checking administrative privileges..."
+    if (Test-Administrator) {
+        Write-Output "Installing AIP Service module..."
+        try {
+            Install-Module -Name AIPService -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        } catch {
+            Write-Warning "Automatic installation of AIPService module failed. Please install it manually."
+            Write-Warning "To install manually, open PowerShell as an administrator and run: Install-Module -Name AIPService -Force -AllowClobber"
+        }
+    } else {
+        Write-Warning "Administrative privileges required to install the AIPService module."
+        Write-Warning "Please run this script as an administrator or install the module manually."
+    }
+}
+
+# Check if ExchangeOnlineManagement module is installed, if not, install it
+if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
+    Write-Output "Checking administrative privileges..."
+    if (Test-Administrator) {
+        Write-Output "Installing Exchange Online Management module..."
+        try {
+            Install-Module -Name ExchangeOnlineManagement -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        } catch {
+            Write-Warning "Automatic installation of ExchangeOnlineManagement module failed. Please install it manually."
+            Write-Warning "To install manually, open PowerShell as an administrator and run: Install-Module -Name ExchangeOnlineManagement -Force -AllowClobber"
+        }
+    } else {
+        Write-Warning "Administrative privileges required to install the ExchangeOnlineManagement module."
+        Write-Warning "Please run this script as an administrator or install the module manually."
+    }
+}
+
+# Check if MSOnline module is installed, if not, install it
+if (-not (Get-Module -Name MSOnline -ListAvailable)) {
+    Write-Output "Checking administrative privileges..."
+    if (Test-Administrator) {
+        Write-Output "Installing MSOnline module..."
+        try {
+            Install-Module -Name MSOnline -Force -AllowClobber -Scope CurrentUser -ErrorAction Stop
+        } catch {
+            Write-Warning "Automatic installation of MSOnline module failed. Please install it manually."
+            Write-Warning "To install manually, open PowerShell as an administrator and run: Install-Module -Name MSOnline -Force -AllowClobber"
+        }
+    } else {
+        Write-Warning "Administrative privileges required to install the MSOnline module."
+        Write-Warning "Please run this script as an administrator or install the module manually."
+    }
 }
 
 # Import required modules
 Import-Module AzureAD
 Import-Module ExchangeOnlineManagement
 Import-Module AIPService
+Import-Module MSOnline
 
-# Authenticate to Azure AD using modern authentication
+# Authenticate to Azure AD, AIPService, Exchange Online, and MSOnline using modern authentication
 try {
     Connect-AzureAD
 } catch {
@@ -53,8 +133,20 @@ try {
     Write-Host "Failed to connect to Azure AD. See error log for details."
     exit
 }
-
-# Connect to Exchange Online using modern authentication
+try {
+    Connect-MsolService
+} catch {
+    Log-Error "Failed to connect to MSolService. Error: $_"
+    Write-Host "Failed to connect to MsolService. See error log for details."
+    exit
+}
+try {
+    Connect-AIPService
+} catch {
+    Log-Error "Failed to connect to AIPService. Error: $_"
+    Write-Host "Failed to connect to AIPService. See error log for details."
+    exit
+}
 try {
     Connect-ExchangeOnline
 } catch {
@@ -63,18 +155,15 @@ try {
     exit
 }
 
-# Connect to AIPService using modern authentication
-try {
-    Connect-AIPService
-} catch {
-    Log-Error "Failed to connect to AIPService. Error: $_"
-    Write-Host "Failed to connect to AIPService. See error log for details."
-    exit
-}
-
 # Retrieve organization information from Azure
 $organizationInfo = Get-AzureADTenantDetail | Select-Object -ExpandProperty DisplayName
 $defaultDomain = Get-AcceptedDomain | Where-Object { $_.Default -eq 'True' }
+
+
+
+####################
+# User interations #
+####################
 
 # Display menu to the user with the welcome message
 $choice = 0
@@ -346,14 +435,10 @@ Write-Host @"
     Read-Host "Press Enter to continue..."
 }
 
-# Disconnect from Azure AD
+# Disconnect from all services
 Disconnect-AzureAD -Confirm:$false
-
-# Disconnect from Exchange Online
+Disconnect-AIPService
 Disconnect-ExchangeOnline -Confirm:$false
-
-# Disconnect from AIP Service
-Disconnect-AIPService -Confirm:$false
 
 # Clear the screen before Exiting
 Clear-Host
