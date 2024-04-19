@@ -1,6 +1,6 @@
 # PowerShell Scripts
 
-This is a collection of PowerShell scripts I've written to try and make my life (and now, yours) easier.  Please enjoy.
+This is a collection of PowerShell scripts either I've sourced or written to try and make my life (and now, yours) easier.  Please enjoy.
 
 This collection of scripts are all licensed under the MIT License, Copyright (c) 2024 TripodGG
 
