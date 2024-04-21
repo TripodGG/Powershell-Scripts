@@ -69,6 +69,9 @@ foreach ($file in $filesToCopy) {
     }
 }
 
+# Success message
+Write-Host "All files copied successfully!" -ForegroundColor Green
+Start-Sleep -Seconds 5
 
 # Clear the screen and return to a PS prompt
 Clear-Host
