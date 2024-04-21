@@ -107,7 +107,7 @@ Write-Host "Checking if Winget is installed..."
 Install-Winget
 
 # Launch Chris Titus Tech Windows Utility
-Write-Host "Launching ChrisTitusTech Windows Utility..."
+Write-Host "Launching ChrisTitusTech Windows Utility..." -ForegroundColor Blue
 Start-Sleep -Seconds 5
 irm https://christitus.com/win | iex
 break
