@@ -5,6 +5,8 @@
 
 
 
+# Clear the screen
+Clear-Host
 
 # Function to prompt user for directory creation
 function PromptForDirectoryCreation {
@@ -28,9 +30,6 @@ function PromptForDirectoryCreation {
     Write-Host "No valid destination directory provided. Exiting script."
     exit
 }
-
-# Clear the screen
-Clear-Host
 
 # Prompt user for source folder
 $sourceFolder = Read-Host "Enter the source folder path"

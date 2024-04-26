@@ -3,6 +3,11 @@
 # Purpose: Search for all installed web browsers and clear all cached data
 # License: MIT License, Copyright (c) 2024 TripodGG
 
+
+
+# Clear the screen
+Clear-Host
+
 # Function to check for installed browsers and clear cached data
 function Clear-BrowserCaches {
     param()

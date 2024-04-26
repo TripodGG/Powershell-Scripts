@@ -4,6 +4,10 @@
 # License: MIT License, Copyright (c) 2024 TripodGG
 
 
+
+# Clear the screen
+Clear-Host
+
 #Function to clear browser cache
 function Clear-BrowserCaches {
     param()

@@ -3,6 +3,8 @@
 # Purpose: Retrieve Windows product information from registry
 # License: MIT License, Copyright (c) 2024 TripodGG
 
+
+
 # Function to retrieve registry value
 function Get-RegistryValue {
     param (

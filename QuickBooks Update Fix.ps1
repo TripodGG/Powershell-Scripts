@@ -5,8 +5,6 @@
 
 
 
-
-
 # Clear the screen
 Clear-Host
 
