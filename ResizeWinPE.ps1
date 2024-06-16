@@ -3,6 +3,8 @@
 # Purpose: Resize the WinRE partition of a disk
 # License: MIT License, Copyright (c) Microsoft Corporation
 
+
+
 ################################################################################################
 #
 # Copyright (c) Microsoft Corporation.

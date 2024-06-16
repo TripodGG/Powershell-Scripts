@@ -2,7 +2,7 @@
 
 This is a collection of PowerShell scripts either I've sourced or written to try and make my life (and now, yours) easier.  Please enjoy.
 
-This collection of scripts are all licensed under the MIT License, Copyright (c) 2024 TripodGG
+This collection of scripts are all licensed under the MIT License, Copyright (c) 2024 TripodGG, or the associated license from the author.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

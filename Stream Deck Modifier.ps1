@@ -5,6 +5,9 @@
 
 
 
+# Clear the screen
+Clear-Host
+
 # Error logging function
 function Log-Error {
     param (

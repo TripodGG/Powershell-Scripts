@@ -5,6 +5,10 @@
 
 
 
+# Clear the screen
+Clear-Host
+
+
 ###########################
 # Functions & definitions #
 ###########################

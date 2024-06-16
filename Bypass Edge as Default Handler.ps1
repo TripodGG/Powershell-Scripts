@@ -6,7 +6,6 @@
 
 
 
-
 @(set "0=%~f0"^)#) & powershell -nop -c iex([io.file]::ReadAllText($env:0)) & exit/b
 
 $_Paste_in_Powershell = {

@@ -1,6 +1,17 @@
+REM # Name: Windows Product Key lookup
+REM # Author: TripodGG
+REM # Purpose: Extract the Windows product key from the registry, then decrypt it so it is readable, from a vbs
+REM # License: MIT License, Copyright (c) 2024 TripodGG
+
+
+
+REM # Define the shell to be used
 Set WshShell = CreateObject("WScript.Shell")
+
+REM # Find the product key in the registry
 MsgBox ConvertToKey(WshShell.RegRead("HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\DigitalProductId"))
 
+REM # Function to decrypt the product key
 Function ConvertToKey(Key)
 Const KeyOffset = 52
 i = 28
