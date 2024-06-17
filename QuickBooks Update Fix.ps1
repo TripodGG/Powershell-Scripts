@@ -3,8 +3,6 @@
 # Purpose: Fix Error 15xxx when trying to update QuickBooks
 # License: MIT License, Copyright (c) 2024 TripodGG
 
-
-
 # Clear the screen
 Clear-Host
 
@@ -34,10 +32,10 @@ if (Test-Administrator) {
     Write-Host "Running with administrative privileges." -ForegroundColor Cyan
 } else {
     # Log an error if administrative privileges are not available
-	Write-Host "This script requires administrative privileges. Please rerun this script as administrator." -ForegroundColor Red
+    Write-Host "This script requires administrative privileges. Please rerun this script as administrator." -ForegroundColor Red
     Log-Error -ErrorMessage "This script requires administrative privileges. Please rerun this script as administrator."
-	Break
-	exit
+    Break
+    exit
 }
 
 # Function to close QuickBooks
@@ -77,32 +75,36 @@ sfc /scannow
 # Run dism to clean the image and restore health
 dism /online /cleanup-image /restorehealth
 
-# Function to run QuickBooks repair silently
-function Run-QuickBooks-Repair {
-    $quickbooksRepairExe = "C:\Program Files\Common Files\Intuit\QuickBooks\QBRepair.exe"
-    
+# Function to launch the reboot batch file
+function Launch-RebootBatch {
     try {
-        # Start the repair process silently
-        $repairProcess = Start-Process -FilePath $quickbooksRepairExe -ArgumentList "/S" -PassThru -Wait
-        
-        # Check if repair process exited successfully
-        if ($repairProcess.ExitCode -eq 0) {
-            Write-Host "QuickBooks repair completed successfully." -ForegroundColor Green
-        } else {
-            Write-Host "QuickBooks repair failed. Exit code: $($repairProcess.ExitCode)" -ForegroundColor Red
-            Log-Error -ErrorMessage "QuickBooks repair failed. Exit code: $($repairProcess.ExitCode)"
+        $qbPath = "C:\Program Files\Intuit\QuickBooks*"
+        $qbDirs = Get-ChildItem -Path $qbPath -Directory
+
+        if ($qbDirs.Count -eq 0) {
+            throw "No QuickBooks installation directory found."
         }
+
+        $qbDir = $qbDirs | Select-Object -First 1
+        $batchFilePath = Join-Path -Path $qbDir.FullName -ChildPath "reboot.bat"
+
+        if (-Not (Test-Path -Path $batchFilePath)) {
+            throw "Batch file not found: $batchFilePath"
+        }
+
+        Start-Process -FilePath $batchFilePath -Wait
     } catch {
-        Write-Host "Failed to start QuickBooks repair: $_" -ForegroundColor Red
-        Log-Error -ErrorMessage "Failed to start QuickBooks repair: $_"
+        Write-Host "Failed to launch reboot batch file: $_" -ForegroundColor Red
+        Log-Error -ErrorMessage "Failed to launch reboot batch file: $_"
     }
 }
 
-# Run QuickBooks repair
-Run-QuickBooks-Repair
-
 # Reboot the computer with warning prompt
-Write-Host "You must reboot your computer to finish the repair.  Once the computer has finished rebooting, run QuickBooks as administrator and rerun the update process.  Please save your work now, then press enter to reboot your computer..."
-Break
+Write-Host "You must reboot your computer to finish the repair. Once the computer has finished rebooting, run QuickBooks as administrator and rerun the update process. Please save your work now, then press enter to reboot your computer..."
+[void][System.Console]::ReadKey($true)
+
+# Launch the reboot batch file
+Launch-RebootBatch
+
 Write-Host "Rebooting your computer..."
 shutdown -r -f -t 005
