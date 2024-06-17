@@ -99,12 +99,12 @@ function Launch-RebootBatch {
     }
 }
 
+# Launch the reboot batch file
+Launch-RebootBatch
+
 # Reboot the computer with warning prompt
 Write-Host "You must reboot your computer to finish the repair. Once the computer has finished rebooting, run QuickBooks as administrator and rerun the update process. Please save your work now, then press enter to reboot your computer..."
 [void][System.Console]::ReadKey($true)
-
-# Launch the reboot batch file
-Launch-RebootBatch
 
 Write-Host "Rebooting your computer..."
 shutdown -r -f -t 005
