@@ -53,7 +53,7 @@ function Close-QuickBooks {
             Write-Host "$ProcessName closed." -ForegroundColor Green
         }
     } catch {
-        Log-Error -ErrorMessage "Failed to close $ProcessName: $_"
+        Log-Error -ErrorMessage "Failed to close $ProcessName $_"
     }
 }
 
