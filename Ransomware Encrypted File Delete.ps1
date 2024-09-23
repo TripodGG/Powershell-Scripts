@@ -43,3 +43,5 @@ Get-ChildItem -Path $folder_path -Recurse -Filter "*$encrypted_ext" -File -Error
 # Final message and log entry
 Write-Host "All $encrypted_ext encrypted files have been deleted. A log file has been saved to: $log_file"
 Add-Content -Path $log_file -Value "Completed file deletion process at $(Get-Date)"
+Pause
+Clear-Host
