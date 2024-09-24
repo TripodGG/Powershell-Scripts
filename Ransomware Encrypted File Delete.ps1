@@ -6,7 +6,7 @@
 
 
 # Prompt user for the ransomware file extension
-$encrypted_ext = Read-Host "Enter the ransomware file extension (e.g., .trinity)"
+$encrypted_ext = Read-Host "Enter the ransomware file extension (e.g., .abyss, .crypt, .hydra, .trinity, etc.)"
 
 # Prompt user for the top-level folder to scan
 $folder_path = Read-Host "Enter the top-level folder path to scan for encrypted files"
@@ -20,7 +20,7 @@ if ($initial_confirmation -notmatch "^(yes|y)$") {
 
 # Final confirmation before deleting files
 $log_file = [System.IO.Path]::Combine($HOME, "RansomwareDelete.log")
-$final_confirmation = Read-Host "This will delete all $encrypted_ext files. Are you absolutely sure? This cannot be undone. The log file will be saved at $log_file. (yes/y or no/n)"
+$final_confirmation = Read-Host "This will delete all $encrypted_ext files and any README.TXT files. Are you absolutely sure? This cannot be undone. The log file will be saved at $log_file. (yes/y or no/n)"
 if ($final_confirmation -notmatch "^(yes|y)$") {
     Write-Host "Operation canceled. Exiting script."
     exit
@@ -34,6 +34,14 @@ Write-Host "Scanning for files with extension $encrypted_ext in $folder_path and
 
 # Get and delete the files with the specified extension
 Get-ChildItem -Path $folder_path -Recurse -Filter "*$encrypted_ext" -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Write-Host "Deleting: $($_.FullName)"
+    # Log the deletion to the file
+    Add-Content -Path $log_file -Value "Deleted file: $($_.FullName) at $(Get-Date)"
+    Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+}
+
+# Get and delete all README.TXT files
+Get-ChildItem -Path $folder_path -Recurse -Filter "README.TXT" -File -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "Deleting: $($_.FullName)"
     # Log the deletion to the file
     Add-Content -Path $log_file -Value "Deleted file: $($_.FullName) at $(Get-Date)"
