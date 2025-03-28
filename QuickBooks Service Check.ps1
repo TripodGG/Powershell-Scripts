@@ -26,20 +26,30 @@ function Log-Message {
 # Log start of script run
 Log-Message "----- Running service check -----"
 
-# Check and start QBCFMonitorService
-$service1 = Get-Service -Name 'QBCFMonitorService' -ErrorAction SilentlyContinue
-if ($null -ne $service1) {
-    if ($service1.Status -ne 'Running') {
-        Start-Service -Name 'QBCFMonitorService'
-        Log-Message "Started QBCFMonitorService (was not running)."
+# List of static QuickBooks-related services to check
+$servicesToCheck = @(
+    'QBCFMonitorService',
+    'QBIDPService',
+    'QBUpdateMonitorService',
+    'QBWCMonitor'
+)
+
+# Check and start each static service
+foreach ($svcName in $servicesToCheck) {
+    $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
+    if ($null -ne $svc) {
+        if ($svc.Status -ne 'Running') {
+            Start-Service -Name $svcName
+            Log-Message "Started $svcName (was not running)."
+        } else {
+            Log-Message "$svcName is already running."
+        }
     } else {
-        Log-Message "QBCFMonitorService is already running."
+        Log-Message "$svcName not found on this system."
     }
-} else {
-    Log-Message "QBCFMonitorService not found on this system."
 }
 
-# Check for QuickBooksDBxx service
+# Check for QuickBooksDBxx service (dynamic name)
 $qbService = Get-Service | Where-Object { $_.Name -match '^QuickBooksDB\d{2}$' }
 
 if ($qbService) {
